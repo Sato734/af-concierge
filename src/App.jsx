@@ -30,9 +30,9 @@ const CHECKPOINTS = {
 };
 
 const MISSION_TYPES = [
-  { id: "arrival",    label: "ARRIVÉE" },
-  { id: "departure",  label: "DÉPART" },
-  { id: "connection", label: "CONNEXION" },
+  { id: "arrival",    label: "Arrivée" },
+  { id: "departure",  label: "Départ" },
+  { id: "connection", label: "Connexion" },
 ];
 
 function formatTime(date) {
@@ -151,42 +151,18 @@ export default function App() {
       <div style={S.navBar}>
         <div style={S.afStripe} />
         <div style={S.navInner}>
-          {/* Logo AF officiel blanc */}
-          <img
-            src="https://www-fr.static-af.com/assets/components/43.3.0/af/logo/brand-logo.svg"
-            alt="Air France"
-            style={{ height: 22, filter: "brightness(0) invert(1)", flexShrink: 0 }}
-            onError={e => { e.target.style.display = "none"; }}
-          />
+          <div style={S.afLogo}><span style={{ fontSize: 20, color: "#fff" }}>✈</span></div>
           <div style={{ flex: 1 }}>
+            <div style={S.navTitle}>Air France</div>
             <div style={S.navSub}>Conciergerie · CDG</div>
           </div>
-          <img src="https://www-fr.static-af.com/assets/components/43.3.0/af/logo/brand-logo.svg" alt="AF" style={{ height: 18, filter: "brightness(0) invert(1)", opacity: 0.8 }} onError={e => { e.target.style.display = "none"; }} />
+          <img src="https://www-fr.static-af.com/assets/components/43.3.0/af/logo/brand-logo.svg" alt="AF" style={{ height: 20, filter: "brightness(0) invert(1)", opacity: 0.9 }} onError={e => { e.target.style.display = "none"; }} />
         </div>
       </div>
 
       <div style={S.banner}>
-        {/* Logo clefs conciergerie SVG */}
-        <svg viewBox="0 0 120 60" width="110" style={{ marginBottom: 6 }} xmlns="http://www.w3.org/2000/svg">
-          <g fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-            {/* Clé gauche */}
-            <circle cx="28" cy="22" r="10" />
-            <circle cx="28" cy="22" r="5" />
-            <line x1="28" y1="32" x2="28" y2="52" />
-            <line x1="28" y1="44" x2="33" y2="44" />
-            <line x1="28" y1="50" x2="35" y2="50" />
-            {/* Clé droite */}
-            <circle cx="92" cy="22" r="10" />
-            <circle cx="92" cy="22" r="5" />
-            <line x1="92" y1="32" x2="92" y2="52" />
-            <line x1="92" y1="44" x2="87" y2="44" />
-            <line x1="92" y1="50" x2="85" y2="50" />
-            {/* Lien infini entre les deux */}
-            <path d="M38 22 Q60 8 82 22" strokeWidth="3" />
-            <path d="M38 22 Q60 36 82 22" strokeWidth="3" />
-          </g>
-        </svg>
-        <div style={S.bannerTitle}>conciergerie</div>
+        <img src="https://www-fr.static-af.com/assets/components/43.3.0/af/logo/brand-logo.svg" alt="Air France" style={{ height: 28, filter: "brightness(0) invert(1)", marginBottom: 4 }} onError={e => { e.target.style.display = "none"; }} />
+        <div style={S.bannerTitle}>Conciergerie</div>
         <div style={S.bannerSub}>Paris · Charles de Gaulle</div>
       </div>
 
@@ -206,7 +182,7 @@ export default function App() {
                 onKeyDown={e => { if (e.key === "Enter") { setEditingAgent(false); try { localStorage.setItem("af_agent_name", agentName); } catch {} }}} />
             ) : (
               <div style={S.agentChipCard} onClick={() => setEditingAgent(true)}>
-                <span>🤵</span><span style={{ color: AF_NAVY, fontSize: 12, fontWeight: 700 }}>{agentName || "Nom Agent"}</span>
+                <span>👤</span><span style={{ color: AF_NAVY, fontSize: 12, fontWeight: 700 }}>{agentName || "Mon nom"}</span>
               </div>
             )}
           </div>
@@ -253,7 +229,7 @@ export default function App() {
         <div style={S.afStripe} />
         <div style={S.navInner}>
           <button style={S.backBtn} onClick={() => setScreen("home")}>←</button>
-          <img src="https://www-fr.static-af.com/assets/components/43.3.0/af/logo/brand-logo.svg" alt="AF" style={{ height: 18, filter: "brightness(0) invert(1)", marginRight: 4 }} onError={e => { e.target.style.display = "none"; }} />
+          <div style={S.afLogo}><span style={{ fontSize: 20, color: "#fff" }}>✈</span></div>
           <div>
             <div style={S.navTitle}>Partager l'app</div>
             <div style={S.navSub}>QR Code · Raccourci</div>
@@ -495,7 +471,7 @@ const S = {
   backBtn:    { background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", borderRadius: 8, width: 36, height: 36, fontSize: 18, cursor: "pointer", flexShrink: 0 },
   liveChip:   { marginLeft: "auto", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 20, padding: "4px 10px", fontSize: 13, fontWeight: 600 },
   banner:     { background: "linear-gradient(135deg, #002157 0%, #003580 60%, #1A3A6B 100%)", padding: "24px 20px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, borderBottom: "4px solid #E2001A" },
-  bannerTitle:{ color: "#fff", fontSize: 28, fontWeight: 300, letterSpacing: 4, textTransform: "lowercase", fontFamily: "Georgia, 'Times New Roman', serif" },
+  bannerTitle:{ color: "#fff", fontSize: 22, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" },
   bannerSub:  { color: "#C8A951", fontSize: 12, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" },
   clockWrap:  { textAlign: "center", padding: "20px 16px 16px" },
   clockTime:  { fontSize: 52, fontWeight: 700, color: AF_NAVY, letterSpacing: -2, fontVariantNumeric: "tabular-nums" },
