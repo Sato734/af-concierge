@@ -2,24 +2,24 @@ import { useState, useEffect, useRef } from "react";
 
 const CHECKPOINTS = {
   arrival: [
-    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157" },
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
     { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
     { id: "baggage",    label: "Baggage Claim",          icon: "🧳", color: "#1A3A6B", hasBagCount: true },
     { id: "driver",     label: "Driver Meeting",         icon: "🚗", color: "#2A4A7B" },
     { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   departure: [
-    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157" },
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
+    { id: "baggage",    label: "Check-in Baggage",       icon: "🧳", color: "#1A3A6B", hasBagCount: true },
     { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
     { id: "pif",        label: "Security Control (PIF)", icon: "🔍", color: "#1A3A6B" },
-    { id: "baggage",    label: "Check-In Baggage",       icon: "🧳", color: "#1A3A6B", hasBagCount: true },
     { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
     { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
     { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
     { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   connection: [
-    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157" },
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
     { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
     { id: "pif",        label: "Security Control (PIF)", icon: "🔍", color: "#1A3A6B" },
     { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
@@ -63,6 +63,7 @@ export default function App() {
   const [adpComment, setAdpComment] = useState("");
   const [missionComment, setMissionComment] = useState("");
   const [baggageCount, setBaggageCount] = useState("");
+  const [passengerCount, setPassengerCount] = useState("");
   const [appUrl, setAppUrl] = useState("");
   const [agentName, setAgentName] = useState("");
   const [editingAgent, setEditingAgent] = useState(false);
@@ -96,7 +97,7 @@ export default function App() {
   function startMission() {
     if (!form.passengerName.trim()) return;
     setMission({ id: Date.now(), ...form, startedAt: new Date().toISOString() });
-    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount("");
+    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount("");
     setScreen("mission");
   }
 
@@ -106,7 +107,7 @@ export default function App() {
   }
 
   function endMission() {
-    const session = { ...mission, endedAt: new Date().toISOString(), logs, adpBlocked, adpComment, agentName, missionComment, baggageCount };
+    const session = { ...mission, endedAt: new Date().toISOString(), logs, adpBlocked, adpComment, agentName, missionComment, baggageCount, passengerCount };
     saveSessions([session, ...sessions]);
     setSelectedSession(session);
     setScreen("report");
@@ -127,6 +128,7 @@ export default function App() {
     s.logs.forEach((l, i) => {
       txt += (i + 1) + ". " + l.icon + "  " + l.label;
       if (l.id === "baggage" && s.baggageCount) txt += " — " + s.baggageCount + " bagage(s)";
+      if (l.id === "meeting" && s.passengerCount) txt += " — " + s.passengerCount + " passager(s)";
       txt += "\n   → " + formatTime(l.timestamp) + "\n\n";
     });
     if (s.missionComment) { txt += "\nCOMMENTAIRE\n" + s.missionComment + "\n"; }
@@ -312,13 +314,14 @@ export default function App() {
                     <div style={{ fontWeight: 700, fontSize: 15 }}>
                       {cp.label}
                       {cp.hasBagCount && done && (
-                        <input
-                          type="number" min="0" max="99" placeholder="0"
-                          value={baggageCount}
-                          onClick={e => e.stopPropagation()}
-                          onChange={e => { e.stopPropagation(); setBaggageCount(e.target.value); }}
-                          style={{ marginLeft: 10, width: 44, textAlign: "center", padding: "2px 4px", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 14, fontWeight: 700, outline: "none", color: "#fff", background: "rgba(255,255,255,0.2)", display: "inline-block" }}
-                        />
+                        <input type="number" min="0" max="99" placeholder="0" value={baggageCount}
+                          onClick={e => e.stopPropagation()} onChange={e => { e.stopPropagation(); setBaggageCount(e.target.value); }}
+                          style={{ marginLeft: 10, width: 44, textAlign: "center", padding: "2px 4px", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 14, fontWeight: 700, outline: "none", color: "#fff", background: "rgba(255,255,255,0.2)", display: "inline-block" }} />
+                      )}
+                      {cp.hasPaxCount && done && (
+                        <input type="number" min="0" max="99" placeholder="0" value={passengerCount}
+                          onClick={e => e.stopPropagation()} onChange={e => { e.stopPropagation(); setPassengerCount(e.target.value); }}
+                          style={{ marginLeft: 10, width: 44, textAlign: "center", padding: "2px 4px", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 14, fontWeight: 700, outline: "none", color: "#fff", background: "rgba(255,255,255,0.2)", display: "inline-block" }} />
                       )}
                     </div>
                     {done && <div style={{ fontSize: 13, marginTop: 3, fontWeight: 600, color: "rgba(255,255,255,0.95)" }}>{formatTime(done.timestamp)}</div>}
@@ -346,9 +349,9 @@ export default function App() {
               <span style={{ fontSize: 20 }}>⚠️</span>
               <div style={{ fontWeight: 700, fontSize: 15, color: "#002157" }}>BLOCAGE PAR ADP</div>
             </div>
-            <div style={{ fontSize: 13, color: "#7A8AAA", marginBottom: 14 }}>Un agent ADP vous a refusé ou compliqué l'accès ?</div>
+            <div style={{ fontSize: 13, color: "#7A8AAA", marginBottom: 14 }}>Un agent ADP vous a t-il refusé ou compliqué l'accès ?</div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setAdpBlocked(true)} style={{ ...S.adpBtn, ...(adpBlocked === true ? { background: "#E2001A", color: "#fff", border: "1.5px solid #E2001A" } : {}) }}>OUI — BLOCAGE</button>
+              <button onClick={() => setAdpBlocked(true)} style={{ ...S.adpBtn, ...(adpBlocked === true ? { background: "#E2001A", color: "#fff", border: "1.5px solid #E2001A" } : {}) }}>✕ OUI — BLOCAGE</button>
               <button onClick={() => { setAdpBlocked(false); setAdpComment(""); }} style={{ ...S.adpBtn, ...(adpBlocked === false ? { background: "#059669", color: "#fff", border: "1.5px solid #059669" } : {}) }}>✓ NON — RAS</button>
             </div>
             {adpBlocked === true && (
