@@ -402,7 +402,11 @@ export default function App() {
               <div key={i} style={{ ...S.tlRow, borderBottom: i < s.logs.length - 1 ? "1px solid #EEF1F7" : "none" }}>
                 <div style={{ fontSize: 20, width: 32, textAlign: "center", flexShrink: 0 }}>{log.icon}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: "#002157" }}>{log.label}{log.id === "baggage" && s.baggageCount ? " — " + s.baggageCount + " bagage(s)" : ""}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: "#002157" }}>
+                    {log.label}
+                    {log.id === "baggage" && s.baggageCount ? " — " + s.baggageCount + " bagage(s)" : ""}
+                    {log.id === "meeting" && s.passengerCount ? " — " + s.passengerCount + " passager(s)" : ""}
+                  </div>
                   <div style={{ fontSize: 14, color: "#E2001A", fontWeight: 700, marginTop: 2 }}>{formatTime(log.timestamp)}</div>
                 </div>
               </div>
