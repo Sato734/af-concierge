@@ -2,37 +2,37 @@ import { useState, useEffect, useRef } from "react";
 
 const CHECKPOINTS = {
   arrival: [
-    { id: "meeting",    label: "Meeting",               sublabel: "Accueil personnalisé",            icon: "🤝", color: "#002157" },
-    { id: "paf",        label: "Passport Control (PAF)", sublabel: "Contrôle passeport",             icon: "🛂", color: "#1A3A6B" },
-    { id: "baggage",    label: "Baggage Claim",          sublabel: "Récupération des bagages",       icon: "🧳", color: "#1A3A6B", hasBagCount: true },
-    { id: "driver",     label: "Driver",                 sublabel: "Rencontre avec le chauffeur",    icon: "🚗", color: "#2A4A7B" },
-    { id: "goodbye",    label: "End of Service",         sublabel: "Fin de prestation",              icon: "👋", color: "#E2001A" },
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157" },
+    { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
+    { id: "baggage",    label: "Baggage Claim",          icon: "🧳", color: "#1A3A6B", hasBagCount: true },
+    { id: "driver",     label: "Driver Meeting",         icon: "🚗", color: "#2A4A7B" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   departure: [
-    { id: "meeting",    label: "Meeting",               sublabel: "Accueil personnalisé",            icon: "🤝", color: "#002157" },
-    { id: "paf",        label: "Passport Control (PAF)", sublabel: "Contrôle passeport",             icon: "🛂", color: "#1A3A6B" },
-    { id: "pif",        label: "Security Control (PIF)", sublabel: "Contrôle sûreté",                icon: "🔍", color: "#1A3A6B" },
-    { id: "baggage",    label: "Check-In Baggage",       sublabel: "Enregistrement des bagages",     icon: "🧳", color: "#1A3A6B", hasBagCount: true },
-    { id: "lounge_in",  label: "Lounge Entry",           sublabel: "Accès au salon",                 icon: "🛋️", color: "#6B2737" },
-    { id: "lounge_out", label: "Lounge Exit",            sublabel: "Sortie du salon",                icon: "🚪", color: "#6B2737" },
-    { id: "boarding",   label: "Boarding",               sublabel: "Accompagnement à l'embarquement",icon: "✈️", color: "#002157" },
-    { id: "goodbye",    label: "End of Service",         sublabel: "Fin de prestation",              icon: "👋", color: "#E2001A" },
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157" },
+    { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
+    { id: "pif",        label: "Security Control (PIF)", icon: "🔍", color: "#1A3A6B" },
+    { id: "baggage",    label: "Check-In Baggage",       icon: "🧳", color: "#1A3A6B", hasBagCount: true },
+    { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
+    { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
+    { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   connection: [
-    { id: "meeting",    label: "Meeting",               sublabel: "Accueil personnalisé",            icon: "🤝", color: "#002157" },
-    { id: "paf",        label: "Passport Control (PAF)", sublabel: "Contrôle passeport",             icon: "🛂", color: "#1A3A6B" },
-    { id: "pif",        label: "Security Control (PIF)", sublabel: "Contrôle sûreté",                icon: "🔍", color: "#1A3A6B" },
-    { id: "lounge_in",  label: "Lounge Entry",           sublabel: "Accès au salon",                 icon: "🛋️", color: "#6B2737" },
-    { id: "lounge_out", label: "Lounge Exit",            sublabel: "Sortie du salon",                icon: "🚪", color: "#6B2737" },
-    { id: "boarding",   label: "Boarding",               sublabel: "Accompagnement à l'embarquement",icon: "✈️", color: "#002157" },
-    { id: "goodbye",    label: "End of Service",         sublabel: "Fin de prestation",              icon: "👋", color: "#E2001A" },
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157" },
+    { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
+    { id: "pif",        label: "Security Control (PIF)", icon: "🔍", color: "#1A3A6B" },
+    { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
+    { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
+    { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
 };
 
 const MISSION_TYPES = [
-  { id: "arrival",    label: "Arrivée" },
-  { id: "departure",  label: "Départ" },
-  { id: "connection", label: "Connexion" },
+  { id: "arrival",    label: "ARRIVÉE" },
+  { id: "departure",  label: "DÉPART" },
+  { id: "connection", label: "CONNEXION" },
 ];
 
 function formatTime(date) {
@@ -151,7 +151,12 @@ export default function App() {
       <div style={S.navBar}>
         <div style={S.afStripe} />
         <div style={S.navInner}>
-          <div style={S.afLogo}><span style={{ fontSize: 20, color: "#fff" }}>✈</span></div>
+          <div style={{ width: 44, height: 44, background: "#fff", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg viewBox="0 0 80 90" width="32" height="36" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="8,80 34,10 64,10 38,80" fill="#E2001A"/>
+              <polygon points="40,80 64,10 72,10 48,80" fill="#002157"/>
+            </svg>
+          </div>
           <div style={{ flex: 1 }}>
             <div style={S.navTitle}>Air France</div>
             <div style={S.navSub}>Conciergerie · CDG</div>
@@ -182,7 +187,7 @@ export default function App() {
                 onKeyDown={e => { if (e.key === "Enter") { setEditingAgent(false); try { localStorage.setItem("af_agent_name", agentName); } catch {} }}} />
             ) : (
               <div style={S.agentChipCard} onClick={() => setEditingAgent(true)}>
-                <span>👤</span><span style={{ color: AF_NAVY, fontSize: 12, fontWeight: 700 }}>{agentName || "Mon nom"}</span>
+                <span>🤵</span><span style={{ color: AF_NAVY, fontSize: 12, fontWeight: 700 }}>{agentName || "Nom Agent"}</span>
               </div>
             )}
           </div>
@@ -310,7 +315,6 @@ export default function App() {
                   <span style={{ fontSize: 22, flexShrink: 0, width: 32, textAlign: "center" }}>{cp.icon}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{cp.label}</div>
-                    <div style={{ fontSize: 12, marginTop: 1, fontStyle: "italic", color: done ? "rgba(255,255,255,0.7)" : "#7A8AAA" }}>{cp.sublabel}</div>
                     {done && <div style={{ fontSize: 13, marginTop: 3, fontWeight: 600, color: "rgba(255,255,255,0.95)" }}>{formatTime(done.timestamp)}</div>}
                   </div>
                   {cp.hasBagCount ? (
@@ -344,7 +348,7 @@ export default function App() {
               <span style={{ fontSize: 20 }}>⚠️</span>
               <div style={{ fontWeight: 700, fontSize: 15, color: "#002157" }}>BLOCAGE PAR ADP</div>
             </div>
-            <div style={{ fontSize: 13, color: "#7A8AAA", marginBottom: 14 }}>Un agent ADP a refusé ou compliqué l'accès ?</div>
+            <div style={{ fontSize: 13, color: "#7A8AAA", marginBottom: 14 }}>Un agent ADP vous a refusé ou compliqué l'accès ?</div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setAdpBlocked(true)} style={{ ...S.adpBtn, ...(adpBlocked === true ? { background: "#E2001A", color: "#fff", border: "1.5px solid #E2001A" } : {}) }}>OUI — BLOCAGE</button>
               <button onClick={() => { setAdpBlocked(false); setAdpComment(""); }} style={{ ...S.adpBtn, ...(adpBlocked === false ? { background: "#059669", color: "#fff", border: "1.5px solid #059669" } : {}) }}>✓ NON — RAS</button>
