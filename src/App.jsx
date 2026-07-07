@@ -27,11 +27,16 @@ const CHECKPOINTS = {
     { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
     { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
+  ultimate: [
+    { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
+    { id: "drop",       label: "Passenger Drop",         icon: "🚖", color: "#6B2737" },
+  ],
 };
 
 const MISSION_TYPES = [
   { id: "arrival",    label: "ARRIVÉE" },
   { id: "departure",  label: "DÉPART" },
+  { id: "ultimate",   label: "ULTIMATE" },
   { id: "connection", label: "CONNEXION" },
 ];
 
@@ -57,13 +62,15 @@ export default function App() {
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [now, setNow] = useState(new Date());
-  const [form, setForm] = useState({ passengerName: "", flightNumber: "", missionType: "departure" });
+  const [form, setForm] = useState({ passengerName: "", flightNumber: "", pnr: "", missionType: "departure" });
   const [copied, setCopied] = useState(false);
   const [adpBlocked, setAdpBlocked] = useState(null);
   const [adpComment, setAdpComment] = useState("");
   const [missionComment, setMissionComment] = useState("");
   const [baggageCount, setBaggageCount] = useState("");
   const [passengerCount, setPassengerCount] = useState("");
+  const [editingTime, setEditingTime] = useState(null);
+  const [manualTime, setManualTime] = useState("");
   const [appUrl, setAppUrl] = useState("");
   const [agentName, setAgentName] = useState("");
   const [editingAgent, setEditingAgent] = useState(false);
@@ -97,13 +104,35 @@ export default function App() {
   function startMission() {
     if (!form.passengerName.trim()) return;
     setMission({ id: Date.now(), ...form, startedAt: new Date().toISOString() });
-    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount("");
+    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount(""); setEditingTime(null); setManualTime("");
     setScreen("mission");
   }
 
   function stamp(cp) {
-    if (logs.find(l => l.id === cp.id)) return;
-    setLogs(prev => [...prev, { id: cp.id, label: cp.label, icon: cp.icon, timestamp: new Date().toISOString() }]);
+    const existing = logs.find(l => l.id === cp.id);
+    if (existing) {
+      setLogs(prev => prev.filter(l => l.id !== cp.id));
+    } else {
+      setLogs(prev => [...prev, { id: cp.id, label: cp.label, icon: cp.icon, timestamp: new Date().toISOString() }]);
+      if (cp.hasPaxCount && !passengerCount) setPassengerCount("1");
+      if (cp.hasBagCount && !baggageCount) setBaggageCount("1");
+    }
+  }
+
+  function applyManualTime(cp) {
+    if (!manualTime) return;
+    const today = new Date();
+    const [h, m] = manualTime.split(":");
+    today.setHours(parseInt(h), parseInt(m), 0, 0);
+    const entry = { id: cp.id, label: cp.label, icon: cp.icon, timestamp: today.toISOString() };
+    setLogs(prev => {
+      const filtered = prev.filter(l => l.id !== cp.id);
+      return [...filtered, entry].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    });
+    if (cp.hasPaxCount && !passengerCount) setPassengerCount("1");
+    if (cp.hasBagCount && !baggageCount) setBaggageCount("1");
+    setEditingTime(null);
+    setManualTime("");
   }
 
   function endMission() {
@@ -122,6 +151,7 @@ export default function App() {
     txt += "Date       : " + formatDate(s.startedAt) + "\n";
     txt += "Passager   : " + s.passengerName + "\n";
     txt += "Vol        : " + (s.flightNumber || "N/A") + "\n";
+    txt += "PNR        : " + (s.pnr || "N/A") + "\n";
     txt += "Type       : " + typeLabel + "\n";
     txt += "Durée      : " + dur + "\n";
     txt += "==========================================\n\nCHECKPOINTS :\n\n";
@@ -198,11 +228,15 @@ export default function App() {
         <input style={S.input} placeholder="Ex : AF1234" value={form.flightNumber}
           onChange={e => setForm(f => ({ ...f, flightNumber: e.target.value.toUpperCase() }))} />
 
+        <label style={S.label}>PNR</label>
+        <input style={S.input} placeholder="Ex : ENYXO2" value={form.pnr}
+          onChange={e => setForm(f => ({ ...f, pnr: e.target.value.toUpperCase() }))} />
+
         <label style={S.label}>Type de mission</label>
-        <div style={S.seg}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {MISSION_TYPES.map(t => (
             <button key={t.id} onClick={() => setForm(f => ({ ...f, missionType: t.id }))}
-              style={{ ...S.segBtn, ...(form.missionType === t.id ? S.segBtnOn : {}) }}>
+              style={{ flex: "1 1 calc(50% - 4px)", padding: "11px 4px", borderRadius: 9, border: "1.5px solid #DDE3EC", background: "#FAFBFD", fontSize: 12, fontWeight: 700, color: "#7A8AAA", cursor: "pointer", ...(form.missionType === t.id ? { background: "#002157", color: "#fff", border: "1.5px solid #002157" } : {}) }}>
               {t.label}
             </button>
           ))}
@@ -221,6 +255,12 @@ export default function App() {
       <button style={{ ...S.ghostBtn, marginTop: 8, color: "#5A6A8A" }} onClick={() => setScreen("qr")}>
         📲 Partager l'app · QR Code
       </button>
+
+      <div style={{ textAlign: "center", padding: "24px 16px 8px", color: "#B0BAD0", fontSize: 11, letterSpacing: 0.5 }}>
+        <div style={{ marginBottom: 4 }}>✦</div>
+        <div>Application créée par</div>
+        <div style={{ fontWeight: 700, color: "#7A8AAA", fontSize: 12, marginTop: 2, letterSpacing: 1 }}>Saad FARIDULLAH</div>
+      </div>
     </div>
   );
 
@@ -314,20 +354,38 @@ export default function App() {
                     <div style={{ fontWeight: 700, fontSize: 15 }}>
                       {cp.label}
                       {cp.hasBagCount && done && (
-                        <input type="number" min="0" max="99" placeholder="0" value={baggageCount}
+                        <input type="number" min="0" max="99" placeholder="1" value={baggageCount}
                           onClick={e => e.stopPropagation()} onChange={e => { e.stopPropagation(); setBaggageCount(e.target.value); }}
                           style={{ marginLeft: 10, width: 44, textAlign: "center", padding: "2px 4px", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 14, fontWeight: 700, outline: "none", color: "#fff", background: "rgba(255,255,255,0.2)", display: "inline-block" }} />
                       )}
                       {cp.hasPaxCount && done && (
-                        <input type="number" min="0" max="99" placeholder="0" value={passengerCount}
+                        <input type="number" min="0" max="99" placeholder="1" value={passengerCount}
                           onClick={e => e.stopPropagation()} onChange={e => { e.stopPropagation(); setPassengerCount(e.target.value); }}
                           style={{ marginLeft: 10, width: 44, textAlign: "center", padding: "2px 4px", borderRadius: 6, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 14, fontWeight: 700, outline: "none", color: "#fff", background: "rgba(255,255,255,0.2)", display: "inline-block" }} />
                       )}
                     </div>
                     {done && <div style={{ fontSize: 13, marginTop: 3, fontWeight: 600, color: "rgba(255,255,255,0.95)" }}>{formatTime(done.timestamp)}</div>}
                   </div>
-                  {done ? <div style={S.cpBadgeDone}>✓</div> : <div style={S.cpBadgePending}>TAP</div>}
+                  {done
+                    ? <div style={S.cpBadgeDone}>✓</div>
+                    : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                        <div style={S.cpBadgePending}>TAP</div>
+                        <button onClick={e => { e.stopPropagation(); setEditingTime(editingTime === cp.id ? null : cp.id); setManualTime(""); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, padding: 0, lineHeight: 1 }}>✏️</button>
+                      </div>
+                  }
                 </button>
+                {editingTime === cp.id && (
+                  <div onClick={e => e.stopPropagation()} style={{ margin: "-6px 0 10px 56px", display: "flex", alignItems: "center", gap: 8, background: "#F4F6FB", borderRadius: 10, padding: "8px 12px", border: "1.5px solid #DDE3EC" }}>
+                    <span style={{ fontSize: 12, color: "#7A8AAA", fontWeight: 600 }}>Heure :</span>
+                    <input type="time" value={manualTime} onChange={e => setManualTime(e.target.value)}
+                      style={{ border: "1.5px solid #DDE3EC", borderRadius: 8, padding: "4px 8px", fontSize: 14, outline: "none", color: "#002157", fontWeight: 600 }} />
+                    <button onClick={() => applyManualTime(cp)}
+                      style={{ background: "#002157", color: "#fff", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✓ OK</button>
+                    <button onClick={() => { setEditingTime(null); setManualTime(""); }}
+                      style={{ background: "#E2001A", color: "#fff", border: "none", borderRadius: 8, padding: "5px 10px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✕</button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -390,7 +448,7 @@ export default function App() {
         </div>
         <div style={{ padding: 16 }}>
           <div style={S.metaCard}>
-            {[["Agent", s.agentName || "N/A"], ["Date", formatDate(s.startedAt)], ["Type", typeLabel], ["Vol", s.flightNumber || "N/A"], ["Durée", dur]].map(([k, v]) => (
+            {[["Agent", s.agentName || "N/A"], ["Date", formatDate(s.startedAt)], ["Type", typeLabel], ["Vol", s.flightNumber || "N/A"], ["PNR", s.pnr || "N/A"], ["Durée", dur]].map(([k, v]) => (
               <div key={k} style={S.metaRow}>
                 <span style={S.metaKey}>{k}</span>
                 <span style={S.metaVal}>{v}</span>
