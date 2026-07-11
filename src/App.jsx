@@ -282,44 +282,66 @@ export default function App() {
 
   // TEMPLATE ACCUEIL
   if (screen === "template" && mission) {
-    const isUltimate = mission.missionType === "ultimate";
-    const bannerSrc = isUltimate ? BMG_BANNER : GUESTY_BANNER;
-    const bannerH   = isUltimate ? "28%" : "29%";
-    const nameTop   = isUltimate ? "28%" : "29%";
-    const nameColor   = isUltimate ? "#1a1a1a" : "#002060";
-    const flightColor = isUltimate ? "#C27D51" : "#002060";
-    const nameFontSize   = isFullscreen ? (isUltimate ? "9vw"   : "8.5vw") : (isUltimate ? "7.5vw" : "7vw");
-    const flightFontSize = isFullscreen ? (isUltimate ? "6.3vw" : "8.5vw") : (isUltimate ? "5.5vw" : "7vw");
+    const isUltimate   = mission.missionType === "ultimate";
+    const bannerSrc    = isUltimate ? BMG_BANNER : GUESTY_BANNER;
+    const bannerH      = isUltimate ? "28%" : "29%";
+    const nameTop      = isUltimate ? "28%" : "29%";
+    const nameColor    = isUltimate ? "#1a1a1a" : "#002060";
+    const flightColor  = isUltimate ? "#C27D51" : "#002060";
+    // isFullscreen peut être : false | true (API native) | "fallback" (iOS CSS)
+    const isFs = isFullscreen === true || isFullscreen === "fallback";
+    const nameFontSize   = isFs ? (isUltimate ? "9vw"   : "8.5vw") : (isUltimate ? "7.5vw" : "7vw");
+    const flightFontSize = isFs ? (isUltimate ? "6.3vw" : "8.5vw") : (isUltimate ? "5.5vw" : "7vw");
+    const isFallback = isFullscreen === "fallback";
 
     function goFullscreen() {
       const el = stageRef.current; if (!el) return;
       const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-      if (req) req.call(el).catch(() => {});
+      if (req) {
+        const p = req.call(el);
+        // Si l'API échoue (iOS Safari), bascule en mode CSS fallback
+        if (p && p.catch) p.catch(() => { setIsFullscreen("fallback"); try { window.scrollTo(0,0); } catch(e){} });
+      } else {
+        // Pas d'API du tout (iOS) → fallback direct
+        setIsFullscreen("fallback");
+        try { window.scrollTo(0, 0); } catch(e) {}
+      }
     }
     function exitFull() {
+      if (isFallback) { setIsFullscreen(false); return; }
       const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
       if (ex) ex.call(document).catch(() => {});
     }
 
+    // Style du stage : normal vs fullscreen natif vs fallback iOS
+    const stageStyle = isFallback ? {
+      position: "fixed", inset: 0, width: "100vw", height: "100vh",
+      borderRadius: 0, zIndex: 9999, background: "#fff",
+      overflow: "hidden", boxShadow: "none"
+    } : {
+      position: "relative", width: "100%", aspectRatio: "16 / 9",
+      background: "#fff", borderRadius: 14, overflow: "hidden",
+      boxShadow: "0 6px 24px rgba(0,0,0,.14)"
+    };
+
     return (
       <div style={S.shell}>
-        <div style={S.navBar}>
-          <div style={S.afStripe} />
-          <div style={S.navInner}>
-            <button style={S.backBtn} onClick={() => setScreen("home")}>←</button>
-            <div style={{ flex: 1 }}>
-              <div style={S.navTitle}>{isUltimate ? "Flying Blue Ultimate" : "Conciergerie"}</div>
-              <div style={S.navSub}>{mission.passengerName} · {mission.flightNumber || "—"}</div>
+        {/* Masquer navbar + boutons en mode fallback iOS */}
+        {!isFallback && (
+          <div style={S.navBar}>
+            <div style={S.afStripe} />
+            <div style={S.navInner}>
+              <button style={S.backBtn} onClick={() => setScreen("home")}>←</button>
+              <div style={{ flex: 1 }}>
+                <div style={S.navTitle}>{isUltimate ? "Flying Blue Ultimate" : "Conciergerie"}</div>
+                <div style={S.navSub}>{mission.passengerName} · {mission.flightNumber || "—"}</div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div style={{ padding: "20px 16px 12px" }}>
-          <div ref={stageRef} style={{
-            position: "relative", width: "100%", aspectRatio: "16 / 9",
-            background: "#fff", borderRadius: 14, overflow: "hidden",
-            boxShadow: "0 6px 24px rgba(0,0,0,.14)"
-          }}>
+        <div style={isFallback ? {} : { padding: "20px 16px 12px" }}>
+          <div ref={stageRef} style={stageStyle}>
             <img src={bannerSrc} alt="" style={{
               position: "absolute", top: 0, left: 0, width: "100%",
               height: bannerH, objectFit: "cover", display: "block"
@@ -339,33 +361,38 @@ export default function App() {
                 </div>
               )}
             </div>
-            {isFullscreen && (
+            {/* Bouton × visible dès qu'on est en plein écran (natif ou fallback) */}
+            {isFs && (
               <button onClick={exitFull} style={{
                 position: "absolute", top: 14, right: 14, zIndex: 10000,
-                width: 48, height: 48, borderRadius: "50%",
-                background: "rgba(0,0,0,.35)", color: "#fff", border: "none",
-                fontSize: 26, lineHeight: 1, cursor: "pointer",
+                width: 52, height: 52, borderRadius: "50%",
+                background: "rgba(0,0,0,.40)", color: "#fff", border: "none",
+                fontSize: 28, lineHeight: 1, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center"
               }}>×</button>
             )}
           </div>
         </div>
 
-        <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <button style={{ ...S.primaryBtn, background: "#002157" }} onClick={goFullscreen}>
-            ⛶ Afficher en plein écran
-          </button>
-          <button style={{ ...S.primaryBtn, background: "#059669" }} onClick={() => setScreen("mission")}>
-            ▶ Commencer la mission
-          </button>
-          <button style={S.ghostBtn} onClick={() => { setScreen("home"); setMission(null); }}>
-            ← Annuler
-          </button>
-        </div>
+        {!isFallback && (
+          <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <button style={{ ...S.primaryBtn, background: "#002157" }} onClick={goFullscreen}>
+              ⛶ Afficher en plein écran
+            </button>
+            <button style={{ ...S.primaryBtn, background: "#059669" }} onClick={() => setScreen("mission")}>
+              ▶ Commencer la mission
+            </button>
+            <button style={S.ghostBtn} onClick={() => { setScreen("home"); setMission(null); }}>
+              ← Annuler
+            </button>
+          </div>
+        )}
 
-        <div style={{ padding: "16px 16px 8px", textAlign: "center", color: "#B0BAD0", fontSize: 12 }}>
-          {isUltimate ? "Flying Blue Ultimate — Présenter au passager" : "Conciergerie — Présenter au passager"}
-        </div>
+        {!isFallback && (
+          <div style={{ padding: "16px 16px 8px", textAlign: "center", color: "#B0BAD0", fontSize: 12 }}>
+            {isUltimate ? "Flying Blue Ultimate — Présenter au passager" : "Conciergerie — Présenter au passager"}
+          </div>
+        )}
       </div>
     );
   }
