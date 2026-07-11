@@ -253,6 +253,15 @@ export default function App() {
       "Commentaire ADP":    s.adpComment || "",
       "Commentaire mission":s.missionComment || "",
       "Checkpoints":        checkpointsTxt,
+      "Passenger Meeting":  cpTime("meeting"),
+      "PAF":                cpTime("paf"),
+      "Baggage":            cpTime("baggage"),
+      "PIF":                cpTime("pif"),
+      "Lounge Entry":       cpTime("lounge_in"),
+      "Lounge Exit":        cpTime("lounge_out"),
+      "Boarding":           cpTime("boarding"),
+      "Driver Meeting":     cpTime("driver"),
+      "End of Service":     cpTime("goodbye"),
     };
     try {
       // Nettoyer : ne pas envoyer les champs vides
