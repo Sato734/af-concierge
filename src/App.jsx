@@ -188,6 +188,7 @@ export default function App() {
     saveSessions([session, ...sessions]);
     setSelectedSession(session);
     setScreen("report");
+    sendToAirtable(session);
   }
 
   function generateReport(s) {
@@ -748,7 +749,7 @@ export default function App() {
           <button style={{ ...S.primaryBtn, background: copied ? "#059669" : "#002157" }} onClick={() => copyReport(s)}>
             {copied ? "✓ Rapport copié !" : "📋 Copier le rapport"}
           </button>
-          {!selectedSession && (
+          {mission && selectedSession && mission.id === selectedSession.id && (
             <button
               style={{ ...S.primaryBtn, marginTop: 8,
                 background: airtableStatus === "sent" ? "#059669" : airtableStatus === "error" ? "#DC2626" : airtableStatus === "sending" ? "#6B7280" : "#C27D51"
