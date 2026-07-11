@@ -63,6 +63,7 @@ export default function App() {
   const [mission, setMission] = useState(null);
   const [logs, setLogs] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [savedMissions, setSavedMissions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [now, setNow] = useState(new Date());
   const [form, setForm] = useState({ passengerName: "", flightNumber: "", pnr: "", missionType: "departure" });
@@ -112,9 +113,35 @@ export default function App() {
       document.removeEventListener("webkitfullscreenchange", handler);
     };
   }, []);
-  useEffect(() => { try { const s = localStorage.getItem(STORAGE_KEY); if (s) setSessions(JSON.parse(s)); } catch {} }, []);
+  useEffect(() => { try { const s = localStorage.getItem(STORAGE_KEY); if (s) setSessions(JSON.parse(s)); } catch {}
+    try { const m = localStorage.getItem("af_saved_missions"); if (m) setSavedMissions(JSON.parse(m)); } catch {}
+  }, []);
 
   function saveSessions(upd) { setSessions(upd); try { localStorage.setItem(STORAGE_KEY, JSON.stringify(upd)); } catch {} }
+
+  function saveForLater() {
+    if (!form.passengerName.trim()) return;
+    const entry = { id: Date.now(), ...form, savedAt: new Date().toISOString() };
+    const upd = [entry, ...savedMissions];
+    setSavedMissions(upd);
+    try { localStorage.setItem("af_saved_missions", JSON.stringify(upd)); } catch {}
+    // Reset form name/flight/pnr mais garde le type
+    setForm(f => ({ ...f, passengerName: "", flightNumber: "", pnr: "" }));
+  }
+
+  function deleteSavedMission(id) {
+    const upd = savedMissions.filter(m => m.id !== id);
+    setSavedMissions(upd);
+    try { localStorage.setItem("af_saved_missions", JSON.stringify(upd)); } catch {}
+  }
+
+  function launchSavedMission(saved) {
+    setForm({ passengerName: saved.passengerName, flightNumber: saved.flightNumber, pnr: saved.pnr, missionType: saved.missionType });
+    deleteSavedMission(saved.id);
+    setMission({ id: Date.now(), passengerName: saved.passengerName, flightNumber: saved.flightNumber, pnr: saved.pnr, missionType: saved.missionType, startedAt: new Date().toISOString() });
+    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount(""); setEditingTime(null); setManualTime(""); setIsFullscreen(false);
+    setScreen("template");
+  }
 
   function startMission() {
     if (!form.passengerName.trim()) return;
@@ -260,7 +287,67 @@ export default function App() {
         <button style={{ ...S.primaryBtn, opacity: form.passengerName.trim() ? 1 : 0.45 }} onClick={startMission}>
           Démarrer la mission
         </button>
+        <button style={{ ...S.ghostBtn, opacity: form.passengerName.trim() ? 1 : 0.45, marginTop: 8, borderStyle: "dashed", color: "#002157", borderColor: "#002157" }} onClick={saveForLater}>
+          🗂 Enregistrer la mission
+        </button>
       </div>
+
+      {/* PLANCHE — missions pré-enregistrées */}
+      {savedMissions.length > 0 && (
+        <div style={{ margin: "16px 0 0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div style={{ width: 3, height: 18, background: "#E2001A", borderRadius: 2 }} />
+            <span style={{ fontWeight: 700, fontSize: 13, color: "#002157", letterSpacing: ".5px", textTransform: "uppercase" }}>
+              Missions enregistrées
+            </span>
+            <span style={{ background: "#E2001A", color: "#fff", borderRadius: 10, fontSize: 11, fontWeight: 700, padding: "1px 7px", marginLeft: 2 }}>
+              {savedMissions.length}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {savedMissions.map(sm => {
+              const typeLabels = { departure: "DÉPART", arrival: "ARRIVÉE", connection: "CONNEXION", ultimate: "ULTIMATE" };
+              const typeColors = { departure: "#002157", arrival: "#059669", connection: "#7C3AED", ultimate: "#C27D51" };
+              const col = typeColors[sm.missionType] || "#002157";
+              const savedDate = new Date(sm.savedAt);
+              const timeStr = savedDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+              return (
+                <div key={sm.id} style={{
+                  background: "#F4F7FF", borderRadius: 12, padding: "12px 14px",
+                  border: `1.5px solid ${col}22`, display: "flex", alignItems: "center", gap: 12
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                      <span style={{ background: col, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 6, letterSpacing: ".5px", flexShrink: 0 }}>
+                        {typeLabels[sm.missionType] || sm.missionType.toUpperCase()}
+                      </span>
+                      <span style={{ fontSize: 11, color: "#8898B0" }}>Enregistré {timeStr}</span>
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: "#002157", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sm.passengerName}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#5A6A8A", marginTop: 2 }}>
+                      {sm.flightNumber && <span>{sm.flightNumber}</span>}
+                      {sm.flightNumber && sm.pnr && <span style={{ margin: "0 5px", opacity: .4 }}>·</span>}
+                      {sm.pnr && <span>{sm.pnr}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => launchSavedMission(sm)} style={{
+                      background: col, color: "#fff", border: "none", borderRadius: 8,
+                      padding: "7px 12px", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: ".3px"
+                    }}>▶ Lancer</button>
+                    <button onClick={() => deleteSavedMission(sm.id)} style={{
+                      background: "transparent", color: "#B0BAD0", border: "1px solid #D8E0EE",
+                      borderRadius: 8, padding: "5px 12px", fontSize: 12, cursor: "pointer"
+                    }}>🗑 Suppr.</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {sessions.length > 0 && (
         <button style={S.ghostBtn} onClick={() => setScreen("history")}>
