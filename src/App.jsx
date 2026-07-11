@@ -288,7 +288,7 @@ export default function App() {
           Démarrer la mission
         </button>
         <button style={{ ...S.ghostBtn, opacity: form.passengerName.trim() ? 1 : 0.45, marginTop: 8, borderStyle: "dashed", color: "#002157", borderColor: "#002157" }} onClick={saveForLater}>
-          🗂 Enregistrer la mission
+          Enregistrer la mission
         </button>
       </div>
 
