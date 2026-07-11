@@ -57,7 +57,7 @@ function formatDuration(ms) {
   return `${s}s`;
 }
 
-const AIRTABLE_TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN;
+const AIRTABLE_TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN || "patBtZbgifk7bgIsZ.075bc6dd2ba186f19d4a9d064e6f9f7920b9367fece0368539c8e24ad17f26c0";
 const AIRTABLE_BASE  = "appMjz4OYW0Dycl7u";
 const AIRTABLE_TABLE = "Missions";
 
@@ -790,7 +790,7 @@ export default function App() {
               disabled={airtableStatus === "sending" || airtableStatus === "sent"}
             >
               {airtableStatus === "sent"    ? "✓ Envoyé vers Airtable !"
-               : (airtableStatus || "").startsWith("error") ? "✗ Erreur — Réessayer"
+               : (airtableStatus || "").startsWith("error") ? "✗ " + (airtableStatus || "").replace("error:", "").slice(0, 55)
                : airtableStatus === "sending" ? "⏳ Envoi en cours..."
                : "☁ Envoyer vers Airtable"}
             </button>
