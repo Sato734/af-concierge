@@ -265,14 +265,26 @@ export default function App() {
       "Passenger Drop":     cpTime("drop"),
     };
     try {
+      // Nettoyer : ne pas envoyer les champs vides
+      const cleanFields = {};
+      Object.entries(fields).forEach(([k, v]) => { if (v !== "" && v !== null && v !== undefined) cleanFields[k] = v; });
       const res = await fetch("https://api.airtable.com/v0/" + AIRTABLE_BASE + "/" + encodeURIComponent(AIRTABLE_TABLE), {
         method: "POST",
         headers: { "Authorization": "Bearer " + AIRTABLE_TOKEN, "Content-Type": "application/json" },
-        body: JSON.stringify({ fields }),
+        body: JSON.stringify({ fields: cleanFields }),
       });
-      if (res.ok) { setAirtableStatus("sent"); }
-      else { setAirtableStatus("error"); }
-    } catch { setAirtableStatus("error"); }
+      if (res.ok) {
+        setAirtableStatus("sent");
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        const msg = (errData && errData.error) ? (errData.error.message || errData.error.type || String(res.status)) : String(res.status);
+        console.error("Airtable error", res.status, errData);
+        setAirtableStatus("error:" + msg);
+      }
+    } catch(e) {
+      console.error("Fetch error:", e);
+      setAirtableStatus("error:" + e.message);
+    }
   }
 
   function copyReport(s) {
@@ -772,13 +784,13 @@ export default function App() {
           {mission && selectedSession && mission.id === selectedSession.id && (
             <button
               style={{ ...S.primaryBtn, marginTop: 8,
-                background: airtableStatus === "sent" ? "#059669" : airtableStatus === "error" ? "#DC2626" : airtableStatus === "sending" ? "#6B7280" : "#C27D51"
+                background: airtableStatus === "sent" ? "#059669" : (airtableStatus||"").startsWith("error") ? "#DC2626" : airtableStatus === "sending" ? "#6B7280" : "#C27D51"
               }}
               onClick={() => sendToAirtable(s)}
               disabled={airtableStatus === "sending" || airtableStatus === "sent"}
             >
               {airtableStatus === "sent"    ? "✓ Envoyé vers Airtable !"
-               : airtableStatus === "error"   ? "✗ Erreur — Réessayer"
+               : (airtableStatus || "").startsWith("error") ? "✗ Erreur — Réessayer"
                : airtableStatus === "sending" ? "⏳ Envoi en cours..."
                : "☁ Envoyer vers Airtable"}
             </button>
