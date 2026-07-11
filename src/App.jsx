@@ -9,7 +9,7 @@ const CHECKPOINTS = {
     { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
     { id: "baggage",    label: "Baggage Claim",          icon: "🧳", color: "#1A3A6B", hasBagCount: true },
     { id: "driver",     label: "Driver Meeting",         icon: "🚗", color: "#2A4A7B" },
-    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   departure: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
@@ -19,7 +19,7 @@ const CHECKPOINTS = {
     { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
     { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
     { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
-    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   connection: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
@@ -28,11 +28,11 @@ const CHECKPOINTS = {
     { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
     { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
     { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
-    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
   ultimate: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
-    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
 };
 
@@ -226,14 +226,17 @@ export default function App() {
     // Helper : récupère l'heure d'un checkpoint par son id
     const cpTime = (id) => {
       const log = (s.logs || []).find(l => l.id === id);
-      return log ? formatTime(log.timestamp) : "";
+      if (!log) return "";
+      const ts = log.timestamp || log.ts || log.time;
+      return ts ? formatTime(ts) : "";
     };
 
     // Résumé texte de tous les checkpoints (bug fix : l.timestamp)
     const checkpointsTxt = (s.logs || []).map(l => {
       const cp = Object.values(CHECKPOINTS).flat().find(c => c.id === l.id);
-      const time = l.timestamp ? formatTime(l.timestamp) : "—";
-      return time + " — " + (cp?.label || l.id) + (l.note ? " (" + l.note + ")" : "");
+      const ts = l.timestamp || l.ts || l.time;
+      const time = ts ? formatTime(ts) : "—";
+      return time + " — " + (cp?.label || l.label || l.id) + (l.note ? " (" + l.note + ")" : "");
     }).join("\n");
 
     const dateStr = new Date(s.startedAt).toISOString().split("T")[0];
@@ -261,7 +264,7 @@ export default function App() {
       "Lounge Exit":        cpTime("lounge_out"),
       "Boarding":           cpTime("boarding"),
       "Driver Meeting":     cpTime("driver"),
-      "End Of Service":     cpTime("goodbye"),
+      "End of Service":     cpTime("goodbye"),
     };
     try {
       // Nettoyer : ne pas envoyer les champs vides
