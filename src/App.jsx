@@ -244,9 +244,9 @@ export default function App() {
       "Checkpoints":        checkpointsTxt,
     };
     try {
-      const res = await fetch(\`https://api.airtable.com/v0/\${AIRTABLE_BASE}/\${encodeURIComponent(AIRTABLE_TABLE)}\`, {
+      const res = await fetch("https://api.airtable.com/v0/" + AIRTABLE_BASE + "/" + encodeURIComponent(AIRTABLE_TABLE), {
         method: "POST",
-        headers: { "Authorization": \`Bearer \${AIRTABLE_TOKEN}\`, "Content-Type": "application/json" },
+        headers: { "Authorization": "Bearer " + AIRTABLE_TOKEN, "Content-Type": "application/json" },
         body: JSON.stringify({ fields }),
       });
       if (res.ok) { setAirtableStatus("sent"); }
