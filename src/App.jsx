@@ -57,6 +57,10 @@ function formatDuration(ms) {
   return `${s}s`;
 }
 
+const AIRTABLE_TOKEN = "patBtZbgifk7bgIsZ.075bc6dd2ba186f19d4a9d064e6f9f7920b9367fece0368539c8e24ad17f26c0";
+const AIRTABLE_BASE  = "appMjz4OYW0Dycl7u";
+const AIRTABLE_TABLE = "Missions";
+
 export default function App() {
   const STORAGE_KEY = "af_concierge_v2";
   const [screen, setScreen] = useState("home");
@@ -68,6 +72,8 @@ export default function App() {
   const [now, setNow] = useState(new Date());
   const [form, setForm] = useState({ passengerName: "", flightNumber: "", pnr: "", missionType: "departure" });
   const [copied, setCopied] = useState(false);
+  const [airtableStatus, setAirtableStatus] = useState(null); // null | "sending" | "sent" | "error"
+
   const [adpBlocked, setAdpBlocked] = useState(null);
   const [adpComment, setAdpComment] = useState("");
   const [missionComment, setMissionComment] = useState("");
@@ -139,14 +145,14 @@ export default function App() {
     setForm({ passengerName: saved.passengerName, flightNumber: saved.flightNumber, pnr: saved.pnr, missionType: saved.missionType });
     deleteSavedMission(saved.id);
     setMission({ id: Date.now(), passengerName: saved.passengerName, flightNumber: saved.flightNumber, pnr: saved.pnr, missionType: saved.missionType, startedAt: new Date().toISOString() });
-    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount(""); setEditingTime(null); setManualTime(""); setIsFullscreen(false);
+    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount(""); setEditingTime(null); setManualTime(""); setIsFullscreen(false); setAirtableStatus(null);
     setScreen("template");
   }
 
   function startMission() {
     if (!form.passengerName.trim()) return;
     setMission({ id: Date.now(), ...form, startedAt: new Date().toISOString() });
-    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount(""); setEditingTime(null); setManualTime(""); setIsFullscreen(false);
+    setLogs([]); setAdpBlocked(null); setAdpComment(""); setMissionComment(""); setBaggageCount(""); setPassengerCount(""); setEditingTime(null); setManualTime(""); setIsFullscreen(false); setAirtableStatus(null);
     setScreen("template");
   }
 
@@ -209,6 +215,43 @@ export default function App() {
     txt += "==========================================\n";
     txt += "Fin de mission : " + (s.endedAt ? formatTime(s.endedAt) : "-") + "\n";
     return txt;
+  }
+
+  async function sendToAirtable(s) {
+    setAirtableStatus("sending");
+    const typeLabel = MISSION_TYPES.find(t => t.id === s.missionType)?.label || s.missionType;
+    const dur = s.endedAt ? formatDuration(new Date(s.endedAt) - new Date(s.startedAt)) : "-";
+    const checkpointsTxt = (s.logs || []).map(l => {
+      const cp = Object.values(CHECKPOINTS).flat().find(c => c.id === l.id);
+      return formatTime(l.ts) + " — " + (cp?.label || l.id) + (l.note ? " (" + l.note + ")" : "");
+    }).join("\n");
+    const dateStr = new Date(s.startedAt).toISOString().split("T")[0];
+    const fields = {
+      "Agent":              s.agentName || "",
+      "Type":               typeLabel,
+      "Passager":           s.passengerName || "",
+      "Vol":                s.flightNumber || "",
+      "PNR":                s.pnr || "",
+      "Date":               dateStr,
+      "Heure début":        formatTime(s.startedAt),
+      "Heure fin":          s.endedAt ? formatTime(s.endedAt) : "",
+      "Durée":              dur,
+      "Passagers":          parseInt(s.passengerCount) || 0,
+      "Bagages":            parseInt(s.baggageCount)   || 0,
+      "ADP Blocage":        s.adpBlocked === true ? "OUI — BLOCAGE" : s.adpBlocked === false ? "NON — RAS" : "",
+      "Commentaire ADP":    s.adpComment || "",
+      "Commentaire mission":s.missionComment || "",
+      "Checkpoints":        checkpointsTxt,
+    };
+    try {
+      const res = await fetch(\`https://api.airtable.com/v0/\${AIRTABLE_BASE}/\${encodeURIComponent(AIRTABLE_TABLE)}\`, {
+        method: "POST",
+        headers: { "Authorization": \`Bearer \${AIRTABLE_TOKEN}\`, "Content-Type": "application/json" },
+        body: JSON.stringify({ fields }),
+      });
+      if (res.ok) { setAirtableStatus("sent"); }
+      else { setAirtableStatus("error"); }
+    } catch { setAirtableStatus("error"); }
   }
 
   function copyReport(s) {
@@ -705,7 +748,21 @@ export default function App() {
           <button style={{ ...S.primaryBtn, background: copied ? "#059669" : "#002157" }} onClick={() => copyReport(s)}>
             {copied ? "✓ Rapport copié !" : "📋 Copier le rapport"}
           </button>
-          <button style={S.ghostBtn} onClick={() => { setMission(null); setLogs([]); setSelectedSession(null); setScreen("home"); }}>
+          {!selectedSession && (
+            <button
+              style={{ ...S.primaryBtn, marginTop: 8,
+                background: airtableStatus === "sent" ? "#059669" : airtableStatus === "error" ? "#DC2626" : airtableStatus === "sending" ? "#6B7280" : "#C27D51"
+              }}
+              onClick={() => sendToAirtable(s)}
+              disabled={airtableStatus === "sending" || airtableStatus === "sent"}
+            >
+              {airtableStatus === "sent"    ? "✓ Envoyé vers Airtable !"
+               : airtableStatus === "error"   ? "✗ Erreur — Réessayer"
+               : airtableStatus === "sending" ? "⏳ Envoi en cours..."
+               : "☁ Envoyer vers Airtable"}
+            </button>
+          )}
+          <button style={S.ghostBtn} onClick={() => { setMission(null); setLogs([]); setSelectedSession(null); setAirtableStatus(null); setScreen("home"); }}>
             + Nouvelle mission
           </button>
         </div>
