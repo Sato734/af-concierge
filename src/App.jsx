@@ -32,7 +32,7 @@ const CHECKPOINTS = {
   ],
   ultimate: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
-    { id: "drop",       label: "Passenger Drop",         icon: "🚖", color: "#6B2737" },
+    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
   ],
 };
 
@@ -222,10 +222,20 @@ export default function App() {
     setAirtableStatus("sending");
     const typeLabel = MISSION_TYPES.find(t => t.id === s.missionType)?.label || s.missionType;
     const dur = s.endedAt ? formatDuration(new Date(s.endedAt) - new Date(s.startedAt)) : "-";
+
+    // Helper : récupère l'heure d'un checkpoint par son id
+    const cpTime = (id) => {
+      const log = (s.logs || []).find(l => l.id === id);
+      return log ? formatTime(log.timestamp) : "";
+    };
+
+    // Résumé texte de tous les checkpoints (bug fix : l.timestamp)
     const checkpointsTxt = (s.logs || []).map(l => {
       const cp = Object.values(CHECKPOINTS).flat().find(c => c.id === l.id);
-      return formatTime(l.ts) + " — " + (cp?.label || l.id) + (l.note ? " (" + l.note + ")" : "");
+      const time = l.timestamp ? formatTime(l.timestamp) : "—";
+      return time + " — " + (cp?.label || l.id) + (l.note ? " (" + l.note + ")" : "");
     }).join("\n");
+
     const dateStr = new Date(s.startedAt).toISOString().split("T")[0];
     const fields = {
       "Agent":              s.agentName || "",
@@ -243,6 +253,16 @@ export default function App() {
       "Commentaire ADP":    s.adpComment || "",
       "Commentaire mission":s.missionComment || "",
       "Checkpoints":        checkpointsTxt,
+      "Passenger Meeting":  cpTime("meeting"),
+      "PAF":                cpTime("paf"),
+      "Baggage":            cpTime("baggage"),
+      "PIF":                cpTime("pif"),
+      "Lounge Entry":       cpTime("lounge_in"),
+      "Lounge Exit":        cpTime("lounge_out"),
+      "Boarding":           cpTime("boarding"),
+      "Driver Meeting":     cpTime("driver"),
+      "End of Service":     cpTime("goodbye"),
+      "Passenger Drop":     cpTime("drop"),
     };
     try {
       const res = await fetch("https://api.airtable.com/v0/" + AIRTABLE_BASE + "/" + encodeURIComponent(AIRTABLE_TABLE), {
