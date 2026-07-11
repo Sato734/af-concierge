@@ -9,7 +9,7 @@ const CHECKPOINTS = {
     { id: "paf",        label: "Passport Control (PAF)", icon: "🛂", color: "#1A3A6B" },
     { id: "baggage",    label: "Baggage Claim",          icon: "🧳", color: "#1A3A6B", hasBagCount: true },
     { id: "driver",     label: "Driver Meeting",         icon: "🚗", color: "#2A4A7B" },
-    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
   ],
   departure: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
@@ -19,7 +19,7 @@ const CHECKPOINTS = {
     { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
     { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
     { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
-    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
   ],
   connection: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
@@ -28,11 +28,11 @@ const CHECKPOINTS = {
     { id: "lounge_in",  label: "Lounge Entry",           icon: "🛋️", color: "#6B2737" },
     { id: "lounge_out", label: "Lounge Exit",            icon: "🚪", color: "#6B2737" },
     { id: "boarding",   label: "Boarding",               icon: "✈️", color: "#002157" },
-    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
   ],
   ultimate: [
     { id: "meeting",    label: "Passenger Meeting",      icon: "🤝", color: "#002157", hasPaxCount: true },
-    { id: "goodbye",    label: "End of Service",         icon: "👋", color: "#E2001A" },
+    { id: "goodbye",    label: "End Of Service",         icon: "👋", color: "#E2001A" },
   ],
 };
 
@@ -244,14 +244,14 @@ export default function App() {
       "Vol":                s.flightNumber || "",
       "PNR":                s.pnr || "",
       "Date":               dateStr,
-      "Heure début":        formatTime(s.startedAt),
-      "Heure fin":          s.endedAt ? formatTime(s.endedAt) : "",
+      "Heure Début":        formatTime(s.startedAt),
+      "Heure Fin":          s.endedAt ? formatTime(s.endedAt) : "",
       "Durée":              dur,
       "Passagers":          parseInt(s.passengerCount) || 0,
       "Bagages":            parseInt(s.baggageCount)   || 0,
       "ADP Blocage":        s.adpBlocked === true ? "OUI — BLOCAGE" : s.adpBlocked === false ? "NON — RAS" : "",
       "Commentaire ADP":    s.adpComment || "",
-      "Commentaire mission":s.missionComment || "",
+      "Commentaire Mission":s.missionComment || "",
       "Checkpoints":        checkpointsTxt,
       "Passenger Meeting":  cpTime("meeting"),
       "PAF":                cpTime("paf"),
@@ -261,7 +261,7 @@ export default function App() {
       "Lounge Exit":        cpTime("lounge_out"),
       "Boarding":           cpTime("boarding"),
       "Driver Meeting":     cpTime("driver"),
-      "End of Service":     cpTime("goodbye"),
+      "End Of Service":     cpTime("goodbye"),
     };
     try {
       // Nettoyer : ne pas envoyer les champs vides
