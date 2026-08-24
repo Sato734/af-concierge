@@ -581,7 +581,7 @@ export default function App() {
           <div style={S.qrTitle}>📲 Scanne ce QR Code !</div>
           <div style={S.qrBox}>
             {appUrl
-              ? <div ref={qrRef} style={{ display: "flex", alignItems: "center", justifyContent: "center" }} />
+              ? <img src={"https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=002157&data=" + encodeURIComponent(appUrl)} alt="QR Code" style={{ width: 240, height: 240, borderRadius: 8 }} />
               : <div style={{ textAlign: "center", padding: 20 }}><div style={{ fontSize: 48, marginBottom: 8 }}>🔲</div><div style={{ fontSize: 13, color: "#7A8AAA" }}>QR Code disponible une fois l'app déployée</div></div>
             }
           </div>
