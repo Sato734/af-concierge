@@ -68,6 +68,7 @@ export default function App() {
   const [logs, setLogs] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [savedMissions, setSavedMissions] = useState([]);
+  const [resumeData, setResumeData] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [now, setNow] = useState(new Date());
   const [form, setForm] = useState({ passengerName: "", flightNumber: "", pnr: "", missionType: "departure" });
@@ -110,6 +111,19 @@ export default function App() {
 
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
 
+  // Auto-save mission en cours à chaque changement
+  useEffect(() => {
+    if (mission && (screen === "mission" || screen === "template")) {
+      try {
+        localStorage.setItem("af_mission_inprogress", JSON.stringify({
+          mission, logs, form, screen,
+          adpBlocked, adpComment, missionComment,
+          baggageCount, passengerCount, agentName
+        }));
+      } catch {}
+    }
+  }, [mission, logs, screen, adpBlocked, adpComment, missionComment, baggageCount, passengerCount]);
+
   useEffect(() => {
     const handler = () => setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
     document.addEventListener("fullscreenchange", handler);
@@ -121,6 +135,10 @@ export default function App() {
   }, []);
   useEffect(() => { try { const s = localStorage.getItem(STORAGE_KEY); if (s) setSessions(JSON.parse(s)); } catch {}
     try { const m = localStorage.getItem("af_saved_missions"); if (m) setSavedMissions(JSON.parse(m)); } catch {}
+    try {
+      const ip = localStorage.getItem("af_mission_inprogress");
+      if (ip) { const d = JSON.parse(ip); if (d && d.mission) setResumeData(d); }
+    } catch {}
   }, []);
 
   function saveSessions(upd) { setSessions(upd); try { localStorage.setItem(STORAGE_KEY, JSON.stringify(upd)); } catch {} }
@@ -183,7 +201,12 @@ export default function App() {
     setManualTime("");
   }
 
+  function clearInProgress() {
+    try { localStorage.removeItem("af_mission_inprogress"); } catch {}
+  }
+
   function endMission() {
+    clearInProgress();
     const session = { ...mission, endedAt: new Date().toISOString(), logs, adpBlocked, adpComment, agentName, missionComment, baggageCount, passengerCount };
     saveSessions([session, ...sessions]);
     setSelectedSession(session);
@@ -296,6 +319,53 @@ export default function App() {
 
   const AF_NAVY = "#002157";
   const AF_RED = "#E2001A";
+
+  // REPRISE MISSION EN COURS
+  if (resumeData && screen === "home") return (
+    <div style={S.shell}>
+      <div style={S.navBar}>
+        <div style={S.afStripe} />
+        <div style={S.navInner}>
+          <div style={{ flex: 1 }}>
+            <div style={S.navTitle}>Mission interrompue</div>
+            <div style={S.navSub}>L'app s'est fermée pendant une mission</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "24px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ background: "#FEF9EC", border: "1.5px solid #C8A951", borderRadius: 14, padding: "16px 18px" }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#002157", marginBottom: 4 }}>
+            ⚠️ Mission non terminée détectée
+          </div>
+          <div style={{ fontSize: 13, color: "#5A6A8A", lineHeight: 1.6 }}>
+            <div><strong>Passager :</strong> {resumeData.mission?.passengerName}</div>
+            <div><strong>Vol :</strong> {resumeData.mission?.flightNumber || "—"}</div>
+            <div><strong>Checkpoints enregistrés :</strong> {resumeData.logs?.length || 0}</div>
+          </div>
+        </div>
+        <button style={{ ...S.primaryBtn, background: "#059669" }} onClick={() => {
+          setMission(resumeData.mission);
+          setLogs(resumeData.logs || []);
+          setForm(resumeData.form || form);
+          setAdpBlocked(resumeData.adpBlocked ?? null);
+          setAdpComment(resumeData.adpComment || "");
+          setMissionComment(resumeData.missionComment || "");
+          setBaggageCount(resumeData.baggageCount || "");
+          setPassengerCount(resumeData.passengerCount || "");
+          setResumeData(null);
+          setScreen("mission");
+        }}>
+          ▶ Reprendre la mission
+        </button>
+        <button style={S.ghostBtn} onClick={() => {
+          clearInProgress();
+          setResumeData(null);
+        }}>
+          🗑 Abandonner et nouvelle mission
+        </button>
+      </div>
+    </div>
+  );
 
   // HOME
   if (screen === "home") return (
